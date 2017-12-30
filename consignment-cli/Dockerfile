@@ -1,6 +1,6 @@
 FROM golang:1.9.2 as builder
 
-WORKDIR /go/src/github.com/agaviria/shippy/consignment-service
+WORKDIR /go/src/github.com/agaviria/shippy/consignment-cli
 
 COPY . .
 
@@ -14,6 +14,7 @@ RUN apk --no-cache add ca-certificates
 
 RUN mkdir /app
 WORKDIR /app
-COPY --from=builder /go/src/github.com/agaviria/shippy/consignment-service/consignment-service .
+COPY consignment.json /app/consignment.json
+COPY --from=builder /go/src/github.com/agaviria/shippy/consignment-cli/consignment-cli .
 
-CMD ["./consignment-service"]
+CMD ["./consignment-cli"]

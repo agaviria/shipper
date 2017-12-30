@@ -1,13 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	pb "github.com/agaviria/shipper/consignment-service/proto/consignment"
+	micro "github.com/micro/go-micro"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -69,6 +69,17 @@ func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest) (*pb.
 func main() {
 	repo := &Repository{}
 
+	// Create a new service.  Optionally include some options here.
+	srv := micro.NewService(
+
+		// this name must match the pakage name given in your protobuf definition
+		micro.Name("go.micro.srv.consignment"),
+		micro.Version("latest"),
+	)
+
+	// init will parse the cli flags.
+	srv.Init
+
 	// Setup our gRPC Server.
 	lis, err := net.Listen("tcp", port)
 
@@ -76,16 +87,12 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	// Register handler
+	pb.RegisterShippingServiceServer(srv.Server(), &service{repo})
 
-	// Register our service with the gRPC server, this will tie our implementation
-	// into the auto-gen interface code for our protobuf definition.
-	pb.RegisterShippingServiceServer(s, &service{repo})
-
-	// Register reflection service on our gRPC server.
-	reflection.Register(s)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	// Run server
+	if err := srv.Run(); err != nil {
+		fmt.Println(err)
 	}
 
 }
